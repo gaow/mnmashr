@@ -96,7 +96,7 @@ public:
           arma::vec r();
           double xx = arma::accu(tXX.col(p)) - tXX.at(p, p);
           
-          mu.slice(k * L + l).row(p) = S.slice(k * L + l).rows(p * J , p * J + J - 1) * (tYX.col(j) - xx * r)
+          mu.slice(k * L + l).row(p) = S.slice(k * L + l).rows(p * J , p * J + J - 1) * (tYX.col(p) - xx * r)
         }
       }
     }
@@ -122,6 +122,6 @@ private:
   // updates on the model
   int n_updates;
   // data dimensions
-  int P, K, L, J
+  int P, K, L, J;
 };
 #endif
