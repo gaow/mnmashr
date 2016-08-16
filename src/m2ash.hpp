@@ -84,19 +84,17 @@ public:
     for (size_t p = 0; p < mu.n_rows; p++) {
       for (size_t k = 0; k < U.n_slices; k++) {
         for (size_t l = 0; l < omega.n_elem; l++) {
+          R.row(p) += alpha.at(k * L + l, p) * mu.slice(k * L + l).row(p);
         }
       }
     }
-
+    //
     for (size_t k = 0; k < U.n_slices; k++) {
       for (size_t l = 0; l < omega.n_elem; l++) {
         // for given prior w_l * U_k
         arma::mat V = omega.at(l) * U.slice(k);
         for (size_t p = 0; p < mu.n_rows; p++) {
-          arma::vec r();
-          double xx = arma::accu(tXX.col(p)) - tXX.at(p, p);
-          
-          mu.slice(k * L + l).row(p) = S.slice(k * L + l).rows(p * J , p * J + J - 1) * (tYX.col(p) - xx * r)
+          mu.slice(k * L + l).row(p) = S.slice(k * L + l).rows(p * J , p * J + J - 1) * (tYX.col(p) - (arma::accu(tXX.col(p)) - tXX.at(p, p)) * R.row(p));
         }
       }
     }
