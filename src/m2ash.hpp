@@ -6,6 +6,7 @@
 #include <map>
 #include <omp.h>
 #include <iostream>
+#include <cmath>
 
 static const double INV_SQRT_2PI = 0.3989422804014327;
 static const double INV_SQRT_2PI_LOG = -0.91893853320467267;
@@ -31,8 +32,11 @@ public:
     pi(pi_0, K * L, false, true), P(P), J(J), K(K), L(L)
   {
     S.set_size(P * J, J, K * L);
+    SI.set_size(P * J, J, K * L);
+    arma::cube V(J, J, K * L, arma::fill::zeros);
     mu.set_size(P, J, K * L);
     alpha.set_size(P, K * L);
+    DSV.set_size(P, K * L);
     n_threads = 1;
     n_updates = 1;
     // initialize data matrices
@@ -49,9 +53,16 @@ public:
     for (size_t k = 0; k < K; k++) {
       for (size_t l = 0; l < L; l++) {
         // for given prior w_l * U_k
-        arma::mat Vi = arma::inv(omega.at(l) * U.slice(k));
+        double t = k * L + l;
+        V.slice(t) = omega.at(l) * U.slice(k);
+        double det_v, sign_v;
+        arma::log_det(det_v, sign_v, V.slice(t));
         for (size_t p = 0; p < P; p++) {
-          S.slice(k * L + l).rows(p * J , p * J + J - 1) = arma::inv(tXX.at(p, p) * arma::eye<arma::mat>(J, J) + Vi);
+          SI.slice(t).rows(p * J , p * J + J - 1) = tXX.at(p, p) * arma::eye<arma::mat>(J, J) + arma::inv(V.slice(t));
+          S.slice(t).rows(p * J , p * J + J - 1) = arma::inv(SI.slice(t).rows(p * J , p * J + J - 1));
+          double det_s, sign_s;
+          arma::log_det(det_s, sign_s, S.slice(t).rows(p * J , p * J + J - 1));
+          DSV.at(p, t) = std::sqrt(std::exp(det_s) * sign_s / std::exp(det_v) / sign_v);
         }
       }
     }
@@ -92,9 +103,12 @@ public:
     for (size_t k = 0; k < U.n_slices; k++) {
       for (size_t l = 0; l < omega.n_elem; l++) {
         // for given prior w_l * U_k
-        arma::mat V = omega.at(l) * U.slice(k);
+        double t = k * L + l;
+        pi.at(t) = arma::accu(alpha.col(t));
         for (size_t p = 0; p < mu.n_rows; p++) {
-          mu.slice(k * L + l).row(p) = S.slice(k * L + l).rows(p * J , p * J + J - 1) * (tYX.col(p) - (arma::accu(tXX.col(p)) - tXX.at(p, p)) * R.row(p));
+          mu.slice(t).row(p) = S.slice(t).rows(p * J , p * J + J - 1) * (tYX.col(p) - (arma::accu(tXX.col(p)) - tXX.at(p, p)) * R.row(p));
+          double kernel = mu.slice(t).row(p).t() * SI.slice(t).rows(p * J , p * J + J - 1) * mu.slice(t).row(p);
+          alpha.col(t) = pi.at(t) * DSV.at(p, t) * std::exp(0.5 * kernel);
         }
       }
     }
@@ -109,10 +123,12 @@ private:
   // updated quantities
   // K * L slices, P * J X J each
   arma::cube S;
+  arma::cube SI;
   // K * L slices, J columns, P rows
   arma::cube mu;
   // K * L columns, P rows
   arma::mat alpha;
+  arma::mat DSV;
   // loglik
   double loglik;
   // number of threads
