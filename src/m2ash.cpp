@@ -71,7 +71,7 @@ int m2ash_vb(double * X, double * Y, double * U, double * omega, double * pi_0,
   model.set_threads(*n_threads);
   model.print(f2, 0);
   while (*niter <= *maxiter) {
-    loglik[*niter] = model.get_loglik();
+    loglik[*niter] = model.get_logKL() * -1;
     (*niter)++;
     // check convergence
     if (*niter > 1) {
