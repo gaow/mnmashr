@@ -6,7 +6,7 @@ devtools::install_github("gaow/m2ashr")
 ```
 If you do not have `devtools` or have no internet access, you need to [obtain the source code](https://github.com/gaow/m2ashr/archive/master.zip), decompress the tarball and type `make` to install the package.
 
-## Running paired factor analysis
+## Running m&m analysis
 
 The main function in the `m2ashr` is `m2ash`:
 ```

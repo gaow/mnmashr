@@ -30,7 +30,7 @@ class M2ASH
 {
 public:
 	M2ASH(double * cX, double * cY, double * cU, double * cOmega, double * pi_0,
-		int N, int P, int J, int K, int L) :
+	      int N, int P, int J, int K, int L) :
 		// mat(aux_mem*, n_rows, n_cols, copy_aux_mem = true, strict = true)
 		U(cU, J, J, K, false, true), omega(cOmega, L, false, true),
 		pi(pi_0, K * L, false, true), P(P), J(J), K(K), L(L), N(N)
@@ -70,7 +70,7 @@ public:
 				for (size_t p = 0; p < P; p++) {
 					SI.slice(t).cols(p * J, p * J + J -
 						1) =
-					    tXX.at(p, p) * arma::eye<arma::mat>(J, J) + VI.slice(t);
+					  tXX.at(p, p) * arma::eye<arma::mat>(J, J) + VI.slice(t);
 					S.slice(t).cols(p * J, p * J + J -
 						1) = arma::inv(SI.slice(t).cols(p * J, p * J + J - 1));
 					double ldet_s, sign_s;
@@ -100,6 +100,18 @@ public:
 			pi.print(out, "pi vector:");
 			alpha.print(out, "alpha matrix:");
 			S.print(out, "S tensor:");
+			SI.print(out, "S inverse tensor:");
+			VI.print(out, "Prior inverse tensor:");
+			DSV.print(out, "DSV matrix:");
+			log_det_S.print(out, "log det(S):");
+			log_det_V.print(out, "log det(Prior):");
+		}
+		if (info == 1) {
+			// relevant updates
+			out << "logKL: " << logKL << std::endl;
+		}
+		if (info == 2) {
+			// irrelevant updates
 		}
 	}
 
@@ -129,10 +141,10 @@ public:
 				pi.at(t) = arma::accu(alpha.col(t));
 				for (size_t p = 0; p < P; p++) {
 					mu.slice(t).col(p) =
-					    S.slice(t).cols(p * J, p * J + J -
+					  S.slice(t).cols(p * J, p * J + J -
 							1) *
-					    (tYX.col(p) -
-					     (arma::accu(tXX.col(p)) - tXX.at(p, p)) * R.col(p));
+					  (tYX.col(p) -
+					   (arma::accu(tXX.col(p)) - tXX.at(p, p)) * R.col(p));
 					double kernel = arma::dot(mu.slice(t).col(p).t() * SI.slice(
 							t).cols(p * J, p * J + J - 1), mu.slice(t).col(p));
 					alpha.at(p, t) = pi.at(t) * DSV.at(p, t) * std::exp(
@@ -169,17 +181,13 @@ public:
 							p1 * J + J - 1);
 						tmp1 = tmp1 + alpha.at(p1, t) * mu_outer_s;
 						pbeta +=
-						    alpha.at(p1,
+						  alpha.at(p1,
 								t) *
-						    (std::log(pi.at(t) - C2 - 0.5 * log_det_V.at(t) -
-								 0.5 *
-								 arma::trace(VI.slice(t) * mu_outer_s)));
+						  (std::log(pi.at(t)) - C2 - 0.5 * log_det_V.at(t) - 0.5 *
+						   arma::trace(VI.slice(t) * mu_outer_s));
 						qbeta +=
-						    alpha.at(p1,
-								t) *
-						    (std::log(alpha.at(p1,
-									 t) - C2 - 0.5 *
-								 log_det_S.at(p1, t) - J * 0.5));
+						  alpha.at(p1,
+								t) * (std::log(alpha.at(p1, t)) - C2 - 0.5 * log_det_S.at(p1, t) - J * 0.5);
 					}
 					tr3m = tr3m + tmp1 * tXX.at(p1, p1);
 				} else {

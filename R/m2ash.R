@@ -53,7 +53,7 @@ m2ash <- function(X, Y, U, omega, pi_0 = NULL, control = NULL) {
     stopifnot(nrow(U[[i]]) == ncol(U[[i]]) && ncol(U[[i]]) == ncol(Y))
   }
   ## analysis
-  loglik <- rep(-999, maxiter)
+  logKL <- rep(-999, maxiter)
   niter <- 0
   status <- 0
   res <- .C("m2ash_vb",
@@ -70,7 +70,7 @@ m2ash <- function(X, Y, U, omega, pi_0 = NULL, control = NULL) {
             as.double(tol),
             as.integer(maxiter),
             niter = as.integer(niter),
-            loglik = as.double(as.vector(loglik)),
+            logKL = as.double(as.vector(logKL)),
             status = as.integer(status),
             as.integer(as.vector(f1)),
             as.integer(n_f1),
@@ -78,5 +78,6 @@ m2ash <- function(X, Y, U, omega, pi_0 = NULL, control = NULL) {
             as.integer(n_f2),
             as.integer(n_cpu),
             PACKAGE = "m2ashr")
-  return(list(pi = pi_0))
+  logKL <- res$logKL[1:res$niter]
+  return(list(pi = res$pi_0, logKL = logKL))
 }
