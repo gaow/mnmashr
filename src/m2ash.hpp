@@ -35,12 +35,12 @@ public:
 		U(cU, J, J, K, false, true), omega(cOmega, L, false, true),
 		pi(pi_0, K * L, false, true), P(P), J(J), K(K), L(L), N(N)
 	{
-		S.set_size(P * J, J, K * L);
-		SI.set_size(P * J, J, K * L);
+		S.set_size(J, J * P, K * L);
+		SI.set_size(J, J * P, K * L);
 		VI.set_size(J, J, K * L);
 		arma::cube V(J, J, K * L, arma::fill::zeros);
-		mu.set_size(P, J, K * L);
-		R.set_size(P, J);
+		mu.set_size(J, P, K * L);
+		R.set_size(J, P);
 		alpha.set_size(P, K * L);
 		DSV.set_size(P, K * L);
 		log_det_S.set_size(P, K * L);
@@ -68,14 +68,14 @@ public:
 				arma::log_det(ldet_v, sign_v, V.slice(t));
 				log_det_V.at(t) = ldet_v;
 				for (size_t p = 0; p < P; p++) {
-					SI.slice(t).rows(p * J, p * J + J -
+					SI.slice(t).cols(p * J, p * J + J -
 						1) =
 					    tXX.at(p, p) * arma::eye<arma::mat>(J, J) + VI.slice(t);
-					S.slice(t).rows(p * J, p * J + J -
-						1) = arma::inv(SI.slice(t).rows(p * J, p * J + J - 1));
+					S.slice(t).cols(p * J, p * J + J -
+						1) = arma::inv(SI.slice(t).cols(p * J, p * J + J - 1));
 					double ldet_s, sign_s;
 					arma::log_det(ldet_s, sign_s,
-						S.slice(t).rows(p * J, p * J + J - 1));
+						S.slice(t).cols(p * J, p * J + J - 1));
 					log_det_S.at(p, t) = ldet_s;
 					DSV.at(p, t) = std::sqrt(std::exp(
 							ldet_s) * sign_s / std::exp(ldet_v) / sign_v);
@@ -116,8 +116,8 @@ public:
 		for (size_t p = 0; p < P; p++) {
 			for (size_t k = 0; k < K; k++) {
 				for (size_t l = 0; l < L; l++) {
-					R.row(p) = R.row(p) + alpha.at(k * L + l, p) * mu.slice(
-						k * L + l).row(p);
+					R.col(p) = R.col(p) + alpha.at(k * L + l, p) * mu.slice(
+						k * L + l).col(p);
 				}
 			}
 		}
@@ -128,14 +128,14 @@ public:
 				double t = k * L + l;
 				pi.at(t) = arma::accu(alpha.col(t));
 				for (size_t p = 0; p < P; p++) {
-					mu.slice(t).row(p) =
-					    S.slice(t).rows(p * J, p * J + J -
+					mu.slice(t).col(p) =
+					    S.slice(t).cols(p * J, p * J + J -
 							1) *
 					    (tYX.col(p) -
-					     (arma::accu(tXX.col(p)) - tXX.at(p, p)) * R.row(p));
-					double kernel = arma::dot(mu.slice(t).row(p) * SI.slice(
-							t).rows(p * J, p * J + J - 1), mu.slice(t).row(p));
-					alpha.col(t) = pi.at(t) * DSV.at(p, t) * std::exp(
+					     (arma::accu(tXX.col(p)) - tXX.at(p, p)) * R.col(p));
+					double kernel = arma::dot(mu.slice(t).col(p).t() * SI.slice(
+							t).cols(p * J, p * J + J - 1), mu.slice(t).col(p));
+					alpha.at(p, t) = pi.at(t) * DSV.at(p, t) * std::exp(
 						0.5 * kernel);
 				}
 			}
@@ -159,13 +159,13 @@ public:
 		for (size_t p1 = 0; p1 < P; p1++) {
 			for (size_t p2 = 0; p2 < P; p2++) {
 				if (p1 == p2) {
-					tr1m = tr1m + R.row(p1) * tYX.col(p1).t();
-					tr2m = tr2m + tXX.at(p1, p1) * (R.row(p1) * R.row(p1).t());
+					tr1m = tr1m + R.col(p1) * tYX.col(p1).t();
+					tr2m = tr2m + tXX.at(p1, p1) * (R.col(p1) * R.col(p1).t());
 					arma::mat tmp1(J, J, arma::fill::zeros);
 					for (size_t t = 0; t < K * L; t++) {
-						arma::mat mu_outer_s = mu.slice(t).row(p1) *
-						                       mu.slice(t).row(p1).t() +
-						                       S.slice(t).rows(p1 * J,
+						arma::mat mu_outer_s = mu.slice(t).col(p1) *
+						                       mu.slice(t).col(p1).t() +
+						                       S.slice(t).cols(p1 * J,
 							p1 * J + J - 1);
 						tmp1 = tmp1 + alpha.at(p1, t) * mu_outer_s;
 						pbeta +=
@@ -183,7 +183,7 @@ public:
 					}
 					tr3m = tr3m + tmp1 * tXX.at(p1, p1);
 				} else {
-					tr4m = tr4m + tXX.at(p1, p2) * (R.row(p1) * R.row(p2).t());
+					tr4m = tr4m + tXX.at(p1, p2) * (R.col(p1) * R.col(p2).t());
 				}
 			}
 		}
@@ -201,14 +201,14 @@ private:
 	arma::vec omega;
 	arma::vec pi;
 	// updated quantities (intermediate)
-	// K * L slices, P * J * J each
+	// K * L slices, J * (J * P) each
 	arma::cube S;
 	arma::cube SI;
 	// K * L slices, J * J each
 	arma::cube VI;
-	// K * L slices, J columns, P rows
+	// K * L slices, J * P
 	arma::cube mu;
-	// P by J matrix like a slice of mu
+	// J * P matrix like a slice of mu
 	arma::mat R;
 	// K * L columns, P rows
 	arma::mat alpha;
