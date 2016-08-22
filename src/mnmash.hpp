@@ -1,12 +1,11 @@
 // Gao Wang and Wei Wang (c) 2016
-#ifndef _M2ASH_HPP
-#define _M2ASH_HPP
+#ifndef _MNMASH_HPP
+#define _MNMASH_HPP
 
 #include <armadillo>
-#include <map>
 #include <omp.h>
+#include <vector>
 #include <iostream>
-#include <cmath>
 
 static const double INV_SQRT_2PI = 0.3989422804014327;
 static const double INV_SQRT_LOG_2PI = -0.91893853320467267;
@@ -26,15 +25,19 @@ inline double normal_pdf_log(double x, double m, double s)
 	return INV_SQRT_LOG_2PI - std::log(s) - 0.5 * a * a;
 };
 
-class M2ASH
+class MNMASH
 {
 public:
-	M2ASH(double * cX, double * cY, double * cU, double * cOmega, double * pi_0,
-	      int N, int P, int J, int K, int L) :
+	MNMASH(const arma::mat & X, const arma::mat & Y, const arma::cube & U,
+	       const arma::vec & omega, const arma::vec & pi_0) :
 		// mat(aux_mem*, n_rows, n_cols, copy_aux_mem = true, strict = true)
-		U(cU, J, J, K, false, true), omega(cOmega, L, false, true),
-		pi(pi_0, K * L, false, true), P(P), J(J), K(K), L(L), N(N)
+		X(X), Y(Y), U(U), omega(omega), pi(pi_0)
 	{
+		J = Y.n_cols;
+		N = Y.n_rows;
+		K = U.n_slices;
+		L = omega.n_elem;
+		P = X.n_cols;
 		S.set_size(J, J * P, K * L);
 		SI.set_size(J, J * P, K * L);
 		VI.set_size(J, J, K * L);
@@ -46,15 +49,13 @@ public:
 		log_det_S.set_size(P, K * L);
 		log_det_V.set_size(K * L);
 		n_threads = 1;
-		n_updates = 1;
+		n_updates = 0;
+		status = 0;
 		// initialize data matrices
-		arma::mat X(cX, N, P, false, true);
-		arma::mat Y(cY, N, J, false, true);
 		tXX = X.t() * X;
 		tYX = Y.t() * X;
-		// initialize alpha with uniform weights
-		alpha.ones();
-		alpha = alpha / double(P);
+		// initialize alpha with simple regression equivalent
+		alpha.zeros();
 		// initialize mu
 		mu.zeros();
 		// initialize S_{tp}
@@ -87,7 +88,7 @@ public:
 	}
 
 
-	~M2ASH() {}
+	~MNMASH() {}
 
 	void print(std::ostream & out, int info)
 	{
@@ -122,6 +123,36 @@ public:
 	}
 
 
+	void set_status(int n)
+	{
+		status = n;
+	}
+
+
+	int get_status()
+	{
+		return status;
+	}
+
+
+	int get_niter()
+	{
+		return n_updates;
+	}
+
+
+	void set_logKL_all(const std::vector<double> & v)
+	{
+		logKLs = v;
+	}
+
+
+	std::vector<double> get_logKL_all()
+	{
+		return logKLs;
+	}
+
+
 	void update()
 	{
 		R.zeros();
@@ -153,8 +184,11 @@ public:
 			}
 		}
 		//
+		// a perhaps more stable way to normalise is to transform to log,
+		// take out max value and transform back to exp
 		alpha = arma::normalise(alpha, 1, 1);
 		pi = arma::normalise(pi);
+		n_updates++;
 	}
 
 
@@ -203,6 +237,8 @@ public:
 
 
 private:
+	arma::mat X;
+	arma::mat Y;
 	arma::mat tXX;
 	arma::mat tYX;
 	arma::cube U;
@@ -226,12 +262,19 @@ private:
 	arma::vec log_det_V;
 	// logKL
 	double logKL;
+	std::vector<double> logKLs;
 	// number of threads
 	int n_threads;
 	// updates on the model
 	int n_updates;
+	int status;
 	// some constants
 	int N, P, K, L, J;
 	double C1, C2;
 };
+
+MNMASH mnmash_vb(const arma::mat & X, const arma::mat & Y, const arma::cube & U,
+	const arma::vec & omega, const arma::vec & pi_0,
+	double tol, int maxiter, int n_threads, std::string f1_log, std::string f2_log);
+
 #endif

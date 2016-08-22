@@ -1,21 +1,18 @@
-INCLUDE_FLAG = -I include -I .
+INCLUDE_FLAG = -I include -I . -I`Rscript -e 'cat(find.package("Rcpp"))'`/include -I`Rscript -e 'cat(find.package("RcppArmadillo"))'`/include
 LINK_FLAGS = -lopenblas -llapack -lm -lgomp -lstdc++
-OPT = -O4
+OPT = -O4 -DARMA_64BIT_WORD -DARMA_USE_CXX11
 CXX = g++
 CXXFLAGS = $(INCLUDE_FLAG) $(OPT) -std=c++11 -fopenmp
 RLIB_FLAGS = -fPIC -shared
 SRC_FILES = $(filter-out main.cpp, $(wildcard *.cpp))
 
-m2ashr.so: obj
-	R CMD SHLIB -o m2ashr.so $(addsuffix .o, $(notdir $(basename $(SRC_FILES)))) $(LINK_FLAGS)
+mnmashr.so: obj
+	R CMD SHLIB -o mnmashr.so $(addsuffix .o, $(notdir $(basename $(SRC_FILES)))) $(LINK_FLAGS)
 
 obj:
 	$(CXX) $(CXXFLAGS) $(RLIB_FLAGS) -c $(SRC_FILES)
 
-play: main.cpp
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LINK_FLAGS)
-
 .PHONY: clean
 
 clean:
-	rm -f m2ash
+	rm -f *.so *.o
