@@ -29,15 +29,15 @@ class MNMASH
 {
 public:
 	MNMASH(const arma::mat & X, const arma::mat & Y, const arma::cube & U,
-         const arma::vec & omega, const arma::vec & pi_0) :
+	       const arma::vec & omega, const arma::vec & pi_0) :
 		// mat(aux_mem*, n_rows, n_cols, copy_aux_mem = true, strict = true)
-    X(X), Y(Y), U(U), omega(omega), pi(pi_0)
+		X(X), Y(Y), U(U), omega(omega), pi(pi_0)
 	{
-    J = Y.n_cols;
-    N = Y.n_rows;
-    K = U.n_slices;
-    L = omega.n_elem;
-    P = X.n_cols;
+		J = Y.n_cols;
+		N = Y.n_rows;
+		K = U.n_slices;
+		L = omega.n_elem;
+		P = X.n_cols;
 		S.set_size(J, J * P, K * L);
 		SI.set_size(J, J * P, K * L);
 		VI.set_size(J, J, K * L);
@@ -50,7 +50,7 @@ public:
 		log_det_V.set_size(K * L);
 		n_threads = 1;
 		n_updates = 0;
-    status = 0;
+		status = 0;
 		// initialize data matrices
 		tXX = X.t() * X;
 		tYX = Y.t() * X;
@@ -122,25 +122,36 @@ public:
 		n_threads = n;
 	}
 
-  void set_status(int n) {
-    status = n;
-  }
 
-  int get_status() {
-    return status;
-  }
+	void set_status(int n)
+	{
+		status = n;
+	}
 
-  int get_niter() {
-    return n_updates;
-  }
 
-  void set_logKL_all(const std::vector<double> & v) {
-    logKLs = v;
-  }
+	int get_status()
+	{
+		return status;
+	}
 
-  std::vector<double> get_logKL_all() {
-    return logKLs;
-  }
+
+	int get_niter()
+	{
+		return n_updates;
+	}
+
+
+	void set_logKL_all(const std::vector<double> & v)
+	{
+		logKLs = v;
+	}
+
+
+	std::vector<double> get_logKL_all()
+	{
+		return logKLs;
+	}
+
 
 	void update()
 	{
@@ -177,7 +188,7 @@ public:
 		// take out max value and transform back to exp
 		alpha = arma::normalise(alpha, 1, 1);
 		pi = arma::normalise(pi);
-    n_updates++;
+		n_updates++;
 	}
 
 
@@ -251,17 +262,19 @@ private:
 	arma::vec log_det_V;
 	// logKL
 	double logKL;
-  std::vector<double> logKLs;
+	std::vector<double> logKLs;
 	// number of threads
 	int n_threads;
 	// updates on the model
 	int n_updates;
-  int status;
+	int status;
 	// some constants
 	int N, P, K, L, J;
 	double C1, C2;
 };
 
-MNMASH mnmash_vb(arma::mat X, arma::mat Y, arma::cube U, arma::vec omega, arma::vec pi_0,
-                 double tol, int maxiter, int n_threads, std::string f1_log, std::string f2_log);
+MNMASH mnmash_vb(const arma::mat & X, const arma::mat & Y, const arma::cube & U,
+	const arma::vec & omega, const arma::vec & pi_0,
+	double tol, int maxiter, int n_threads, std::string f1_log, std::string f2_log);
+
 #endif

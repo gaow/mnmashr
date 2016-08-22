@@ -1,8 +1,8 @@
-INCLUDE_FLAG = -I include -I .
+INCLUDE_FLAG = -I include -I . -I`Rscript -e 'cat(find.package("Rcpp"))'`/include -I`Rscript -e 'cat(find.package("RcppArmadillo"))'`/include
 LINK_FLAGS = -lopenblas -llapack -lm -lgomp -lstdc++
 OPT = -O4 -DARMA_64BIT_WORD -DARMA_USE_CXX11
 CXX = g++
-CXXFLAGS = $(INCLUDE_FLAG) `Rscript -e 'Rcpp:::CxxFlags()'` $(OPT) -std=c++11 -fopenmp -I/opt/miniconda3/lib/R/library/RcppArmadillo/include
+CXXFLAGS = $(INCLUDE_FLAG) $(OPT) -std=c++11 -fopenmp
 RLIB_FLAGS = -fPIC -shared
 SRC_FILES = $(filter-out main.cpp, $(wildcard *.cpp))
 

@@ -20,7 +20,8 @@
 // @param f1_log [string] log file 1 name as integer converted from character array
 // @param f2_log [string] log file 2 name as integer converted from character array
 
-MNMASH mnmash_vb(arma::mat X, arma::mat Y, arma::cube U, arma::vec omega, arma::vec pi_0,
+MNMASH mnmash_vb(const arma::mat & X, const arma::mat & Y, const arma::cube & U,
+                 const arma::vec & omega, const arma::vec & pi_0,
                  double tol, int maxiter, int n_threads, std::string f1_log, std::string f2_log)
 {
 	//
@@ -47,8 +48,8 @@ MNMASH mnmash_vb(arma::mat X, arma::mat Y, arma::cube U, arma::vec omega, arma::
 	//
 	MNMASH model(X, Y, U, omega, pi_0);
 	model.set_threads(n_threads);
-	model.print(f2, 0);
-  std::vector<double> logKL(0);
+	// model.print(f2, 0);
+	std::vector<double> logKL(0);
 	while (model.get_niter() <= maxiter) {
 		logKL.push_back(model.get_logKL());
 		// check convergence
@@ -91,10 +92,12 @@ MNMASH mnmash_vb(arma::mat X, arma::mat Y, arma::cube U, arma::vec omega, arma::
 		  "[WARNING] Variational inference failed to converge after " <<
 		  model.get_niter() <<
 		  " iterations!" << std::endl;
-  model.set_logKL_all(logKL);
-  if (keeplog) {
+	model.set_logKL_all(logKL);
+	if (keeplog) {
 		f1.close();
 		f2.close();
 	}
 	return model;
 }
+
+
