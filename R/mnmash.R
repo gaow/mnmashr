@@ -12,6 +12,8 @@
 #' @references ...
 #' @examples ...
 #' @useDynLib mnmashr
+#' @exportPattern ^[[:alpha:]]+
+#' @importFrom Rcpp evalCpp
 #' @export
 
 mnmash <- function(X, Y, U, omega, pi_0 = NULL, control = NULL) {

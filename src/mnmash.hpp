@@ -5,6 +5,7 @@
 #include <armadillo>
 #include <omp.h>
 #include <vector>
+#include <iostream>
 
 static const double INV_SQRT_2PI = 0.3989422804014327;
 static const double INV_SQRT_LOG_2PI = -0.91893853320467267;
@@ -27,7 +28,8 @@ inline double normal_pdf_log(double x, double m, double s)
 class MNMASH
 {
 public:
-	MNMASH(arma::mat & X, arma::mat & Y, arma::cube & U, arma::vec & omega, arma::vec & pi_0) :
+	MNMASH(const arma::mat & X, const arma::mat & Y, const arma::cube & U,
+         const arma::vec & omega, const arma::vec & pi_0) :
 		// mat(aux_mem*, n_rows, n_cols, copy_aux_mem = true, strict = true)
     X(X), Y(Y), U(U), omega(omega), pi(pi_0)
 	{

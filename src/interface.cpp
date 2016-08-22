@@ -7,7 +7,8 @@ Rcpp::List rcpp_mnmash_vb(Rcpp::NumericMatrix X, Rcpp::NumericMatrix Y,
                      Rcpp::NumericVector pi_0, double tol, int maxiter,
                      int n_threads, Rcpp::StringVector filenames) {
   Rcpp::IntegerVector dimU = U_.attr("dim");
-  arma::cube U(U_.begin(), dimU[0], dimU[1], dimU[2], false, true);
+  arma::cube U(U_.begin(), dimU[0], dimU[1], dimU[2]);
+  U.print("U");
   MNMASH model = mnmash_vb(Rcpp::as<arma::mat>(X),
                            Rcpp::as<arma::mat>(Y),
                            U,
