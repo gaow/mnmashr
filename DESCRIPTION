@@ -1,4 +1,4 @@
-Package: m2ashr 
+Package: mnmashr 
 Version: 0.1
 Date: 2016-08-12
 Title: Multivariate, multiple regression extension of Aadaptive SHrinkage (ASH) 
@@ -7,5 +7,9 @@ Author: Gao Wang and Wei Wang
 Maintainer: Gao Wang <gaow@uchicago.edu>
 Depends:
     R (>= 3.0.0)
+Imports:
+    Rcpp
+LinkingTo:
+    Rcpp, RcppArmadillo
 License: MIT
 RoxygenNote: 5.0.1
