@@ -134,7 +134,7 @@ public:
     return n_updates;
   }
 
-  void set_logKL_all(std::vector<double> & v) {
+  void set_logKL_all(const std::vector<double> & v) {
     logKLs = v;
   }
 

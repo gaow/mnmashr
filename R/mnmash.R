@@ -53,5 +53,5 @@ mnmash <- function(X, Y, U, omega, pi_0 = NULL, control = NULL) {
     stopifnot(nrow(U[,,i]) == ncol(U[,,i]) && ncol(U[,,i]) == J)
   }
   ## analysis
-  res <- rcpp_mnmash_vb(X, Y, U, omega, pi_0, tol, maxiter, n_cpu, c(f1, f2))
+  rcpp_mnmash_vb(X, Y, U, omega, pi_0, tol, maxiter, n_cpu, c(f1, f2))
 }
